@@ -65,6 +65,14 @@ input:disabled{opacity:.35;cursor:not-allowed}
 .excess-label{font-family:Inter,Segoe UI,sans-serif;font-size:14px;fill:#b91c1c;font-weight:900}
 .empty-note{font-family:Inter,Segoe UI,sans-serif;font-size:22px;fill:#94a3b8;font-weight:700}
 .ruler-text{font-family:Inter,Segoe UI,sans-serif;font-size:11px;font-weight:800}
+
+.share-cut-button{
+  width:100%;margin-top:14px;padding:14px 16px;border:0;border-radius:13px;
+  background:#111827;color:#fff;font-weight:800;cursor:pointer;font-size:15px;
+}
+.share-cut-button:active{transform:scale(.99)}
+.share-status{margin:8px 2px 0;font-size:12px;color:#64748b;min-height:18px}
+
 @media(max-width:980px){
   body{background:#111827}
   .app-shell{grid-template-columns:1fr;display:block;min-height:100dvh}
@@ -165,6 +173,8 @@ input:disabled{opacity:.35;cursor:not-allowed}
       <svg id="scene" viewBox="0 0 1100 760" aria-label="Bloco de granito 3D"></svg>
       
     </section>
+    <button id="shareCutButton" class="share-cut-button" type="button">Partilhar corte</button>
+    <div id="shareStatus" class="share-status" aria-live="polite"></div>
 
     <section class="summary-grid">
       <article><span>Dimensão disponível</span><strong id="available">0,0 cm</strong><small id="availableAxis">Largura</small></article>
@@ -431,8 +441,10 @@ function drawCutPlanes(svg,g,face,slabs,available){
     // Uma identificação por série, discreta, fora da zona principal do bloco.
     const prev=slabs[idx-1];
     if(!prev || prev.seriesIndex!==s.seriesIndex){
-      const labelX=rotated?155:865;
-      const labelY=75+s.seriesIndex*30;
+      let labelX,labelY;
+      if(face==="front"){ labelX=rotated?155:865; labelY=75+s.seriesIndex*30; }
+      else if(face==="side"){ labelX=rotated?130:900; labelY=155+s.seriesIndex*30; }
+      else { labelX=rotated?145:875; labelY=95+s.seriesIndex*30; }
       svg.appendChild(svgEl("rect",{
         x:labelX-8,y:labelY-18,width:112,height:23,rx:6,
         fill:"#fff",stroke:s.color,"stroke-width":2,opacity:.97
@@ -445,110 +457,108 @@ function drawCutPlanes(svg,g,face,slabs,available){
 function drawRuler(svg,g,face,layout,available,marginStart,marginEnd,kerf){
   if(available<=0) return;
 
-  // Para a face frontal, a régua fica rigorosamente alinhada com a base frontal do bloco.
-  // Nas outras orientações mantém uma régua horizontal de leitura.
-  let x0, x1;
+  // A régua passa a acompanhar fisicamente o eixo da face selecionada.
+  // Frontal = Comprimento; Lateral = Largura; Superior = Altura.
+  let A,B,normal,offset=38;
   if(face==="front"){
-    x0=g.FBL.x;
-    x1=g.FBR.x;
+    A=g.FBL; B=g.FBR;
+    normal={x:0,y:1};
+    offset=58;
+  }else if(face==="side"){
+    // Usa a aresta inferior da lateral que está realmente visível.
+    A=rotated?g.FBL:g.FBR;
+    B=rotated?g.RBL:g.RBR;
+    const vx=B.x-A.x, vy=B.y-A.y, len=Math.hypot(vx,vy)||1;
+    // normal virada para fora/baixo da silhueta
+    normal={x:-vy/len,y:vx/len};
+    if(normal.y<0){normal.x*=-1;normal.y*=-1}
+    offset=42;
   }else{
-    x0=170;
-    x1=930;
+    // Altura: régua vertical junto à aresta externa da face frontal.
+    A=rotated?g.FTR:g.FTL;
+    B=rotated?g.FBR:g.FBL;
+    const vx=B.x-A.x, vy=B.y-A.y, len=Math.hypot(vx,vy)||1;
+    normal={x:-vy/len,y:vx/len};
+    // normal deve apontar para fora do bloco
+    if(rotated ? normal.x<0 : normal.x>0){normal.x*=-1;normal.y*=-1}
+    offset=48;
   }
 
-  const y=Math.max(g.FBL.y,g.FBR.y)+92;
+  const vx=B.x-A.x, vy=B.y-A.y;
+  const edgeLen=Math.hypot(vx,vy)||1;
+  const ux=vx/edgeLen, uy=vy/edgeLen;
+  const nx=normal.x, ny=normal.y;
+  const base={x:A.x+nx*offset,y:A.y+ny*offset};
+  const pxPerUnit=edgeLen/available;
   const displayMax=Math.max(available,layout.total,1);
-  const pxPerUnit=(x1-x0)/available;
 
-  // Se houver excesso, prolongamos a régua para além do bloco.
-  const rulerEnd=x0+displayMax*pxPerUnit;
+  const pointAt=v=>({x:base.x+ux*v*pxPerUnit,y:base.y+uy*v*pxPerUnit});
+  const shifted=(p,d)=>({x:p.x+nx*d,y:p.y+ny*d});
+  const line=(p1,p2,attrs={})=>svg.appendChild(svgEl("line",{x1:p1.x,y1:p1.y,x2:p2.x,y2:p2.y,...attrs}));
+  const angle=Math.atan2(uy,ux)*180/Math.PI;
 
-  // Linha-base total
-  svg.appendChild(svgEl("line",{
-    x1:x0,y1:y,x2:rulerEnd,y2:y,stroke:"#64748b","stroke-width":1.4
-  }));
+  const baseStart=pointAt(0), baseEnd=pointAt(displayMax);
+  line(baseStart,baseEnd,{stroke:"#64748b","stroke-width":1.4});
 
-  function segment(start,end,label,color,kind="slab"){
+  function segment(start,end,label,color){
     if(end<=start) return;
-    const a=x0+start*pxPerUnit;
-    const b=x0+end*pxPerUnit;
+    const a=pointAt(start), b=pointAt(end);
+    const da=shifted(a,-9), ea=shifted(a,9);
+    const db=shifted(b,-9), eb=shifted(b,9);
+    line(da,ea,{stroke:color,"stroke-width":1.6});
+    line(db,eb,{stroke:color,"stroke-width":1.6});
 
-    // Linhas de extensão nas extremidades do segmento
-    svg.appendChild(svgEl("line",{x1:a,y1:y-9,x2:a,y2:y+9,stroke:color,"stroke-width":1.6}));
-    svg.appendChild(svgEl("line",{x1:b,y1:y-9,x2:b,y2:y+9,stroke:color,"stroke-width":1.6}));
+    const dimA=shifted(a,-18), dimB=shifted(b,-18);
+    line(dimA,dimB,{stroke:color,"stroke-width":2});
+    line(shifted(dimA,-4),shifted(dimA,4),{stroke:color,"stroke-width":1.5});
+    line(shifted(dimB,-4),shifted(dimB,4),{stroke:color,"stroke-width":1.5});
 
-    // Cota colorida por cima da linha-base
-    const dimY=y-18;
-    svg.appendChild(svgEl("line",{x1:a,y1:dimY,x2:b,y2:dimY,stroke:color,"stroke-width":2}));
-    svg.appendChild(svgEl("line",{x1:a,y1:dimY-4,x2:a,y2:dimY+4,stroke:color,"stroke-width":1.5}));
-    svg.appendChild(svgEl("line",{x1:b,y1:dimY-4,x2:b,y2:dimY+4,stroke:color,"stroke-width":1.5}));
-
-    const widthPx=b-a;
-    const fontSize=widthPx<38?9:11;
-    addText(svg,(a+b)/2,dimY-7,label,"ruler-text",{
-      "text-anchor":"middle",fill:color,"font-size":fontSize
+    const mid={x:(dimA.x+dimB.x)/2,y:(dimA.y+dimB.y)/2};
+    const labelPos=shifted(mid,-8);
+    const widthPx=(end-start)*pxPerUnit;
+    const fs=widthPx<38?9:11;
+    let textAngle=angle;
+    if(textAngle>90 || textAngle<-90) textAngle+=180;
+    addText(svg,labelPos.x,labelPos.y,label,"ruler-text",{
+      "text-anchor":"middle",fill:color,"font-size":fs,
+      transform:`rotate(${textAngle} ${labelPos.x} ${labelPos.y})`
     });
   }
 
-  // Margem inicial
-  if(marginStart>0){
-    segment(0,marginStart,`${fmt(marginStart)} cm`,"#475569","margin");
-  }
+  if(marginStart>0) segment(0,marginStart,`${fmt(marginStart)} cm`,"#475569");
 
-  // Chapas - cada uma recebe a sua própria cota na cor da série
   layout.slabs.forEach((s,i)=>{
-    segment(s.start,s.end,`${fmt(s.width)} cm`,s.color,"slab");
-
-    // Disco: representado apenas por pequenas marcas cinzentas,
-    // sem texto para não poluir a leitura.
+    segment(s.start,s.end,`${fmt(s.width)} cm`,s.color);
     const next=layout.slabs[i+1];
     if(next && next.start>s.end){
-      const a=x0+s.end*pxPerUnit;
-      const b=x0+next.start*pxPerUnit;
-      svg.appendChild(svgEl("line",{x1:a,y1:y+13,x2:b,y2:y+13,stroke:"#94a3b8","stroke-width":2}));
+      const a=shifted(pointAt(s.end),13), b=shifted(pointAt(next.start),13);
+      line(a,b,{stroke:"#94a3b8","stroke-width":2});
     }
   });
 
-  // Margem final
-  if(marginEnd>0){
-    segment(layout.endBeforeMargin,layout.total,`${fmt(marginEnd)} cm`,"#475569","margin");
-  }
+  if(marginEnd>0) segment(layout.endBeforeMargin,layout.total,`${fmt(marginEnd)} cm`,"#475569");
 
-  // Marca do fim físico do bloco
-  const availableX=x0+available*pxPerUnit;
-  svg.appendChild(svgEl("line",{
-    x1:availableX,y1:y-28,x2:availableX,y2:y+20,stroke:"#111827","stroke-width":2
-  }));
+  const availP=pointAt(available);
+  line(shifted(availP,-28),shifted(availP,20),{stroke:"#111827","stroke-width":2});
 
-  // Sobra depois da margem final.
-  // Positiva quando ainda há bloco disponível; negativa quando há excesso.
   const sobra=available-layout.total;
-  const totalX=x0+layout.total*pxPerUnit;
+  const totalP=pointAt(layout.total);
   const sobraColor=sobra<0
     ? (layout.slabs.length ? layout.slabs[layout.slabs.length-1].color : "#b91c1c")
     : "#475569";
-  const sobraY=y+48;
+  const sobraA=shifted(totalP,48), sobraB=shifted(availP,48);
+  line(sobraA,sobraB,{stroke:sobraColor,"stroke-width":2.5});
+  line(shifted(sobraA,-7),shifted(sobraA,7),{stroke:sobraColor,"stroke-width":2});
+  line(shifted(sobraB,-7),shifted(sobraB,7),{stroke:sobraColor,"stroke-width":2});
 
-  // A cota vai sempre do fim do plano de corte/margem final ao fim físico do bloco.
-  svg.appendChild(svgEl("line",{
-    x1:Math.min(totalX,availableX),y1:sobraY,
-    x2:Math.max(totalX,availableX),y2:sobraY,
-    stroke:sobraColor,"stroke-width":2.5
-  }));
-  svg.appendChild(svgEl("line",{
-    x1:totalX,y1:sobraY-7,x2:totalX,y2:sobraY+7,
-    stroke:sobraColor,"stroke-width":2
-  }));
-  svg.appendChild(svgEl("line",{
-    x1:availableX,y1:sobraY-7,x2:availableX,y2:sobraY+7,
-    stroke:sobraColor,"stroke-width":2
-  }));
-
-  const sobraText=`Sobra: ${sobra<0?"−":""}${fmt(Math.abs(sobra))} cm`;
-  addText(svg,(totalX+availableX)/2,sobraY-8,
-    sobraText,"ruler-text",{
-      "text-anchor":"middle",fill:sobraColor,"font-weight":"900"
-    });
+  const mid={x:(sobraA.x+sobraB.x)/2,y:(sobraA.y+sobraB.y)/2};
+  const textP=shifted(mid,-8);
+  let textAngle=angle;
+  if(textAngle>90 || textAngle<-90) textAngle+=180;
+  addText(svg,textP.x,textP.y,`Sobra: ${sobra<0?"−":""}${fmt(Math.abs(sobra))} cm`,"ruler-text",{
+    "text-anchor":"middle",fill:sobraColor,"font-weight":"900",
+    transform:`rotate(${textAngle} ${textP.x} ${textP.y})`
+  });
 }
 
 // Mobile: ao entrar num campo numérico com valor 0, limpa-o para escrita imediata.
@@ -597,6 +607,106 @@ seriesListEl.addEventListener("click",e=>{
   renderSeries();
   draw();
 });
+
+
+async function buildShareImage(){
+  const svg=$("scene");
+  const d=getDims(), face=$("faceSelect").value;
+  const layout=makeLayout(n("kerf"),n("marginStart"),n("marginEnd"));
+  const available=availableForFace(face,d);
+  const sobra=available-layout.total;
+
+  // Export the SVG at high resolution, then compose a clean share card.
+  const clone=svg.cloneNode(true);
+  clone.setAttribute("width","1100");
+  clone.setAttribute("height","760");
+  clone.setAttribute("xmlns",NS);
+  const svgText=new XMLSerializer().serializeToString(clone);
+  const svgBlob=new Blob([svgText],{type:"image/svg+xml;charset=utf-8"});
+  const svgUrl=URL.createObjectURL(svgBlob);
+
+  const img=new Image();
+  await new Promise((resolve,reject)=>{
+    img.onload=resolve; img.onerror=reject; img.src=svgUrl;
+  });
+
+  const canvas=document.createElement("canvas");
+  canvas.width=1400; canvas.height=1320;
+  const ctx=canvas.getContext("2d");
+  ctx.fillStyle="#f8fafc"; ctx.fillRect(0,0,canvas.width,canvas.height);
+
+  ctx.fillStyle="#111827";
+  ctx.font="800 48px -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif";
+  ctx.fillText("PLANO DE CORTE",70,85);
+
+  ctx.fillStyle="#64748b";
+  ctx.font="600 27px -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif";
+  ctx.fillText(`Bloco: ${fmt(d.l1)} × ${fmt(d.w1)} × ${fmt(d.h1)} cm`,70,135);
+  ctx.fillText(`Orientação: ${faceInfo[face].title.replace(" selecionada","")}`,70,175);
+
+  // White drawing panel
+  ctx.fillStyle="#ffffff";
+  roundRect(ctx,45,215,1310,835,28);
+  ctx.fill();
+  ctx.drawImage(img,75,245,1250,775);
+  URL.revokeObjectURL(svgUrl);
+
+  const y=1115;
+  ctx.fillStyle="#111827";
+  ctx.font="800 30px -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif";
+  const seriesText=series.filter(s=>s.width>0&&s.count>0)
+    .map(s=>`${s.count} × ${fmt(s.width)} cm`).join("  •  ") || "Sem séries";
+  ctx.fillText(seriesText,70,y);
+
+  ctx.font="600 25px -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif";
+  ctx.fillStyle="#475569";
+  ctx.fillText(`Margens: ${fmt(n("marginStart"))} + ${fmt(n("marginEnd"))} cm   •   Disco: ${fmt(n("kerf"))} cm`,70,y+55);
+
+  ctx.font="900 30px -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif";
+  ctx.fillStyle=sobra<0?"#b91c1c":"#166534";
+  ctx.fillText(sobra<0?`EXCESSO: ${fmt(Math.abs(sobra))} cm`:`SOBRA: ${fmt(sobra)} cm`,70,y+115);
+
+  const blob=await new Promise(resolve=>canvas.toBlob(resolve,"image/png",0.95));
+  return blob;
+}
+function roundRect(ctx,x,y,w,h,r){
+  const rr=Math.min(r,w/2,h/2);
+  ctx.beginPath();ctx.moveTo(x+rr,y);
+  ctx.arcTo(x+w,y,x+w,y+h,rr);ctx.arcTo(x+w,y+h,x,y+h,rr);
+  ctx.arcTo(x,y+h,x,y,rr);ctx.arcTo(x,y,x+w,y,rr);ctx.closePath();
+}
+async function shareCut(){
+  const status=$("shareStatus");
+  const btn=$("shareCutButton");
+  try{
+    btn.disabled=true; btn.textContent="A preparar imagem…";
+    status.textContent="";
+    const blob=await buildShareImage();
+    if(!blob) throw new Error("Não foi possível criar a imagem.");
+    const file=new File([blob],"plano-corte-granito.png",{type:"image/png"});
+    if(navigator.share && (!navigator.canShare || navigator.canShare({files:[file]}))){
+      await navigator.share({
+        files:[file],
+        title:"Plano de corte",
+        text:"Plano de corte de granito"
+      });
+      status.textContent="";
+    }else{
+      // Fallback: opens the generated PNG so the user can use iOS share manually.
+      const url=URL.createObjectURL(blob);
+      window.open(url,"_blank");
+      setTimeout(()=>URL.revokeObjectURL(url),60000);
+      status.textContent="Imagem aberta. Usa Partilhar no Safari para enviar pelo WhatsApp.";
+    }
+  }catch(err){
+    if(err && err.name==="AbortError") return;
+    console.error(err);
+    status.textContent="Não foi possível abrir a partilha. Tenta novamente no Safari ou na PWA instalada.";
+  }finally{
+    btn.disabled=false; btn.textContent="Partilhar corte";
+  }
+}
+$("shareCutButton").addEventListener("click",shareCut);
 
 $("irregularToggle").addEventListener("change",e=>{setIrregular(e.target.checked);draw()});
 ["length1","length2","width1","width2","height1","height2","kerf","marginStart","marginEnd"].forEach(id=>$(id).addEventListener("input",draw));
