@@ -1,0 +1,560 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#111827">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Corte Primário">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Corte Primário de Granito 3D — PWA v8</title>
+<style>
+*{box-sizing:border-box}
+:root{font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#eef1f4;color:#111827}
+body{margin:0;min-height:100vh}
+button,input,select{font:inherit}
+.app-shell{display:grid;grid-template-columns:380px minmax(0,1fr);min-height:100dvh}
+.panel{background:#111827;color:#fff;padding:22px;overflow:auto;-webkit-overflow-scrolling:touch}
+.brand{display:flex;gap:12px;align-items:center;margin-bottom:18px}
+.brand-badge{width:44px;height:44px;border-radius:12px;background:#f59e0b;color:#111827;display:grid;place-items:center;font-size:22px;font-weight:900}
+.brand h1{margin:0;font-size:19px}.brand p{margin:3px 0 0;font-size:12px;color:#9ca3af}
+.box{background:#1f2937;border:1px solid #374151;border-radius:15px;padding:15px;margin-bottom:13px}
+.box h2{margin:0 0 13px;font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:#e5e7eb}
+.box-title-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.measure-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+label{display:block;font-size:11px;color:#cbd5e1}
+.unit{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;margin-top:5px;border:1px solid #4b5563;border-radius:9px;background:#111827}
+.unit input{border:0!important;box-shadow:none!important;min-width:0}
+.unit span{padding-right:9px;color:#9ca3af;font-size:11px}
+input,select{width:100%;padding:9px 10px;border:1px solid #4b5563;border-radius:9px;background:#111827;color:#fff;outline:none}
+input:focus,select:focus,.unit:focus-within{border-color:#f59e0b;box-shadow:0 0 0 3px rgba(245,158,11,.12)}
+input:disabled{opacity:.35;cursor:not-allowed}
+.mt{margin-top:12px}.hint{font-size:11px;line-height:1.4;color:#9ca3af;margin:8px 0 0}
+.switch-line{display:flex;align-items:center;gap:7px;color:#d1d5db}.switch-line input{width:auto}
+.icon-button,.mini-button,.secondary-button{cursor:pointer;border-radius:9px;border:1px solid #4b5563;background:#111827;color:#fff}
+.icon-button{width:40px;height:40px;font-size:20px;touch-action:manipulation}
+.secondary-button{width:100%;padding:12px;background:transparent;color:#d1d5db;touch-action:manipulation}
+.secondary-button:hover,.mini-button:hover,.icon-button:hover{background:#273244}
+.series-list{display:flex;flex-direction:column;gap:9px}
+.series-row{display:grid;grid-template-columns:16px minmax(0,1fr) 82px 30px;gap:7px;align-items:end;padding:9px;border:1px solid #374151;border-radius:11px;background:#17202d}
+.series-swatch{width:14px;height:38px;border-radius:5px;align-self:center}
+.series-row label{font-size:10px}.series-row input{padding:8px}
+.series-remove{width:40px;height:40px;border:0;border-radius:8px;background:#2b3544;color:#d1d5db;cursor:pointer;touch-action:manipulation}
+.series-remove:hover{background:#7f1d1d;color:#fff}
+.js-warning{margin:10px 0 0;color:#fbbf24}
+.js-ready .js-warning{display:none}
+.workspace{padding:24px;min-width:0}
+.workspace-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px}
+.workspace-header h2{margin:3px 0 0;font-size:22px}.eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:#6b7280;font-weight:800}
+.header-actions{display:flex;gap:8px}.mini-button{padding:8px 11px;color:#374151;background:#fff;border-color:#d1d5db}
+.canvas-card{position:relative;height:min(72vh,760px);min-height:560px;background:#fff;border:1px solid #dde2e7;border-radius:18px;overflow:hidden}
+#scene{width:100%;height:100%;display:block;background:linear-gradient(#fafbfc,#f4f6f8)}
+.legend{display:none}.hidden-measure2{display:none!important}
+.legend-title{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#6b7280;font-weight:800;margin-bottom:7px}
+.legend-item{display:flex;gap:8px;align-items:center;font-size:11px;margin:6px 0;color:#374151}
+.legend-color{width:12px;height:12px;border-radius:3px;flex:0 0 auto}
+.summary-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:13px}
+.summary-grid article{background:#fff;border:1px solid #dde2e7;border-radius:13px;padding:14px}
+.summary-grid span{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:#6b7280}
+.summary-grid strong{display:block;font-size:21px;margin-top:4px}.summary-grid small{color:#9ca3af}
+.face{cursor:pointer}.face:hover{opacity:.84}.face.selected{stroke:#f59e0b!important;stroke-width:4!important}
+.dimension-text{font-family:Inter,Segoe UI,sans-serif;font-size:15px;fill:#334155;font-weight:800}
+.cut-label{font-family:Inter,Segoe UI,sans-serif;font-size:12px;fill:#111827;font-weight:800}
+.excess-label{font-family:Inter,Segoe UI,sans-serif;font-size:14px;fill:#b91c1c;font-weight:900}
+.empty-note{font-family:Inter,Segoe UI,sans-serif;font-size:22px;fill:#94a3b8;font-weight:700}
+.ruler-text{font-family:Inter,Segoe UI,sans-serif;font-size:11px;font-weight:800}
+@media(max-width:980px){
+  body{background:#111827}
+  .app-shell{grid-template-columns:1fr;display:block;min-height:100dvh}
+  .panel{position:relative;padding:calc(16px + env(safe-area-inset-top)) 14px 16px;border-bottom:1px solid #263244}
+  .brand{margin-bottom:12px}.brand-badge{width:40px;height:40px;border-radius:10px}.brand h1{font-size:17px}
+  .box{padding:13px;margin-bottom:10px;border-radius:13px}
+  .box h2{font-size:12px;margin-bottom:11px}
+  input,select{min-height:44px;font-size:16px;padding:10px 11px}
+  .unit span{font-size:12px;padding-right:10px}
+  .workspace{padding:14px;background:#eef1f4;padding-bottom:calc(18px + env(safe-area-inset-bottom))}
+  .workspace-header{margin-bottom:10px}.workspace-header h2{font-size:18px}
+  .mini-button{min-height:40px;touch-action:manipulation}
+  .canvas-card{height:52vh;min-height:390px;border-radius:14px}
+  .summary-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:9px}
+  .summary-grid article{padding:11px;border-radius:11px}.summary-grid strong{font-size:18px}
+  .series-row{grid-template-columns:10px minmax(0,1fr) 88px 44px;gap:8px;padding:10px;align-items:end}
+  .series-row input{min-height:40px;padding:8px;font-size:16px}
+  .secondary-button{min-height:46px}
+}
+@media(max-width:560px){
+  .measure-grid{grid-template-columns:1fr 1fr;gap:8px}
+  .workspace-header{align-items:center;gap:8px;flex-direction:row}.header-actions{margin-left:auto}
+  .canvas-card{height:46vh;min-height:340px}
+  .summary-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .series-row{grid-template-columns:8px minmax(0,1fr) 84px 44px}
+  .brand p{font-size:11px}
+}
+@media(max-width:380px){
+  .measure-grid{grid-template-columns:1fr}
+  .summary-grid{grid-template-columns:1fr 1fr}
+  .canvas-card{min-height:315px}
+}
+</style>
+</head>
+<body>
+<div class="app-shell">
+  <aside class="panel">
+    <div class="brand">
+      <div class="brand-badge">G</div>
+      <div><h1>Corte Primário</h1><p>Planeamento 3D de blocos de granito</p></div>
+    </div>
+
+    <section class="box">
+      <div class="box-title-row">
+        <h2>Bloco</h2>
+        <label class="switch-line"><input id="irregularToggle" type="checkbox"><span>Bloco irregular</span></label>
+      </div>
+      <div class="measure-grid">
+        <label>Comp. 1<div class="unit"><input id="length1" type="number" min="0" step="0.1" value="0"><span>cm</span></div></label>
+        <label class="measure2-field hidden-measure2">Comp. 2<div class="unit"><input id="length2" type="number" min="0" step="0.1" value="0" disabled><span>cm</span></div></label>
+        <label>Larg. 1<div class="unit"><input id="width1" type="number" min="0" step="0.1" value="0"><span>cm</span></div></label>
+        <label class="measure2-field hidden-measure2">Larg. 2<div class="unit"><input id="width2" type="number" min="0" step="0.1" value="0" disabled><span>cm</span></div></label>
+        <label>Alt. 1<div class="unit"><input id="height1" type="number" min="0" step="0.1" value="0"><span>cm</span></div></label>
+        <label class="measure2-field hidden-measure2">Alt. 2<div class="unit"><input id="height2" type="number" min="0" step="0.1" value="0" disabled><span>cm</span></div></label>
+      </div>
+    </section>
+
+    <section class="box">
+      <h2>Corte</h2>
+      <div class="measure-grid">
+        <label>Margem inicial<div class="unit"><input id="marginStart" type="number" min="0" step="0.1" value="5"><span>cm</span></div></label>
+        <label>Margem final<div class="unit"><input id="marginEnd" type="number" min="0" step="0.1" value="5"><span>cm</span></div></label>
+      </div>
+      <label class="mt">Espessura do disco<div class="unit"><input id="kerf" type="number" min="0" step="0.1" value="1"><span>cm</span></div></label>
+      <label class="mt">Face / orientação
+        <select id="faceSelect">
+          <option value="front">Frontal — Comp. × Alt.</option>
+          <option value="top">Superior — Comp. × Larg.</option>
+          <option value="side">Lateral — Larg. × Alt.</option>
+        </select>
+      </label>
+      <p class="hint">Também podes clicar diretamente numa face. Na face frontal, os cortes são posicionados ao longo do comprimento.</p>
+    </section>
+
+    <section class="box">
+      <div class="box-title-row"><h2>Séries de chapas</h2><button id="addSeries" class="icon-button" type="button">＋</button></div>
+      <div id="seriesList" class="series-list">
+        <div class="series-row" data-series-row="0">
+          <div class="series-swatch" style="background:#2563eb"></div>
+          <label>Espessura<div class="unit"><input inputmode="decimal" type="number" min="0" step="0.1" data-index="0" data-field="width" value="0"><span>cm</span></div></label>
+          <label>Qtd.<input inputmode="numeric" type="number" min="0" step="1" data-index="0" data-field="count" value="0"></label>
+          <button type="button" class="series-remove" data-remove="0">×</button>
+        </div>
+      </div>
+      <p id="jsWarning" class="hint js-warning">Se o botão + não responder, abre esta aplicação através do endereço PWA no Safari e adiciona ao ecrã principal.</p>
+    </section>
+
+    <button id="resetButton" class="secondary-button" type="button">Repor a zero</button>
+  </aside>
+
+  <main class="workspace">
+    <header class="workspace-header">
+      <div><span class="eyebrow">Representação 3D</span><h2 id="viewTitle">Face frontal selecionada</h2></div>
+      <div class="header-actions"><button id="rotateButton" class="mini-button" type="button">Rodar vista</button></div>
+    </header>
+
+    <section class="canvas-card">
+      <svg id="scene" viewBox="0 0 1100 760" aria-label="Bloco de granito 3D"></svg>
+      
+    </section>
+
+    <section class="summary-grid">
+      <article><span>Dimensão disponível</span><strong id="available">0,0 cm</strong><small id="availableAxis">Largura</small></article>
+      <article><span>Material necessário</span><strong id="required">0,0 cm</strong><small>margens + chapas + disco</small></article>
+      <article><span>Excesso / sobra</span><strong id="remaining">0,0 cm</strong><small id="remainingCaption">sobra</small></article>
+      <article><span>Total de chapas</span><strong id="slabCount">0</strong><small>todas as séries</small></article>
+    </section>
+  </main>
+</div>
+
+<script>
+document.documentElement.classList.add("js-ready");
+const NS="http://www.w3.org/2000/svg";
+const $=id=>document.getElementById(id);
+const colors=["#2563eb","#16a34a","#f59e0b","#7c3aed","#0891b2","#db2777","#65a30d","#ea580c"];
+let rotated=false;
+let series=[{width:0,count:0,color:colors[0]}];
+
+const faceInfo={
+  front:{title:"Face frontal selecionada",axis:"Comprimento"},
+  top:{title:"Face superior selecionada",axis:"Altura"},
+  side:{title:"Face lateral selecionada",axis:"Largura"}
+};
+
+function n(id){return Math.max(0,Number($(id).value)||0)}
+function fmt(v){return Number(v).toLocaleString("pt-PT",{minimumFractionDigits:1,maximumFractionDigits:1})}
+function svgEl(name,attrs={}){const e=document.createElementNS(NS,name);Object.entries(attrs).forEach(([k,v])=>e.setAttribute(k,v));return e}
+function addText(svg,x,y,text,cls,attrs={}){const e=svgEl("text",{x,y,class:cls,...attrs});e.textContent=text;svg.appendChild(e);return e}
+function lerp(a,b,t){return a+(b-a)*t}
+function pLerp(a,b,t){return{x:lerp(a.x,b.x,t),y:lerp(a.y,b.y,t)}}
+function poly(points){return points.map(p=>`${p.x},${p.y}`).join(" ")}
+
+function getDims(){
+  const irregular=$("irregularToggle").checked;
+  const l1=n("length1"),w1=n("width1"),h1=n("height1");
+  return{l1,w1,h1,l2:irregular?n("length2"):l1,w2:irregular?n("width2"):w1,h2:irregular?n("height2"):h1};
+}
+function setIrregular(on){
+  ["length2","width2","height2"].forEach(id=>$(id).disabled=!on);
+  document.querySelectorAll(".measure2-field").forEach(el=>{
+    el.classList.toggle("hidden-measure2", !on);
+  });
+}
+
+function renderSeries(){
+  const list=$("seriesList"); if(!list) return; list.innerHTML="";
+  series.forEach((s,i)=>{
+    const row=document.createElement("div"); row.className="series-row";
+    row.innerHTML=`
+      <div class="series-swatch" style="background:${s.color}"></div>
+      <label>Espessura<div class="unit"><input inputmode="decimal" type="number" min="0" step="0.1" data-index="${i}" data-field="width" value="${s.width}"><span>cm</span></div></label>
+      <label>Qtd.<input inputmode="numeric" type="number" min="0" step="1" data-index="${i}" data-field="count" value="${s.count}"></label>
+      <button type="button" class="series-remove" data-remove="${i}">×</button>`;
+    list.appendChild(row);
+  });
+}
+
+function buildGeometry(d){
+  const maxL=Math.max(d.l1,d.l2,1), maxW=Math.max(d.w1,d.w2,1), maxH=Math.max(d.h1,d.h2,1);
+  const sx=520/maxL, sy=250/maxH;
+  const fW=d.l1*sx, rW=d.l2*sx, fH=d.h1*sy, rH=d.h2*sy;
+  const cx=500, baseY=500, sign=rotated?-1:1;
+  const depth=170, dx=sign*depth, dy=-105;
+
+  const FBL={x:cx-fW/2,y:baseY}, FBR={x:cx+fW/2,y:baseY};
+  const FTL={x:cx-fW/2,y:baseY-fH}, FTR={x:cx+fW/2,y:baseY-fH};
+  const rcx=cx+dx, rbase=baseY+dy;
+  const RBL={x:rcx-rW/2,y:rbase}, RBR={x:rcx+rW/2,y:rbase};
+  const RTL={x:rcx-rW/2,y:rbase-rH}, RTR={x:rcx+rW/2,y:rbase-rH};
+  return{FBL,FBR,FTL,FTR,RBL,RBR,RTL,RTR};
+}
+
+function availableForFace(face,d){
+  // A orientação "frontal" distribui os cortes ao longo do comprimento
+  // da aresta frontal. "Lateral" usa a largura e "Superior" usa a altura.
+  if(face==="front") return d.l1;
+  if(face==="side") return d.w1;
+  return d.h1;
+}
+
+function makeLayout(kerf,marginStart,marginEnd){
+  const slabs=[];
+  let pos=marginStart;
+  const totalSlabs=series.reduce((a,s)=>a+s.count,0);
+  let slabNo=0;
+  series.forEach((s,si)=>{
+    for(let i=0;i<s.count;i++){
+      const start=pos;
+      const end=pos+s.width;
+      slabs.push({start,end,width:s.width,color:s.color,seriesIndex:si});
+      pos=end;
+      slabNo++;
+      if(slabNo<totalSlabs) pos+=kerf;
+    }
+  });
+  const endBeforeMargin=pos;
+  pos+=marginEnd;
+  return{slabs,total:pos,totalSlabs,endBeforeMargin};
+}
+
+function draw(){
+  const svg=$("scene"); svg.innerHTML="";
+  svg.appendChild(svgEl("rect",{x:0,y:0,width:1100,height:760,fill:"#f8fafc"}));
+
+  const d=getDims(), face=$("faceSelect").value;
+  const kerf=n("kerf"), marginStart=n("marginStart"), marginEnd=n("marginEnd");
+  const layout=makeLayout(kerf,marginStart,marginEnd);
+  const available=availableForFace(face,d);
+
+  $("viewTitle").textContent=faceInfo[face].title;
+  $("available").textContent=`${fmt(available)} cm`;
+  $("availableAxis").textContent=faceInfo[face].axis;
+  $("required").textContent=`${fmt(layout.total)} cm`;
+  const excess=Math.max(0,layout.total-available), remaining=Math.max(0,available-layout.total);
+  $("remaining").textContent=`${fmt(excess||remaining)} cm`;
+  $("remainingCaption").textContent=excess?"em excesso":"sobra";
+  $("remaining").style.color=excess?"#b91c1c":"#111827";
+  $("slabCount").textContent=layout.totalSlabs;
+
+  if(d.l1<=0 || d.w1<=0 || d.h1<=0){
+    addText(svg,550,360,"Introduz as medidas do bloco","empty-note",{"text-anchor":"middle"});
+    return;
+  }
+
+  const g=buildGeometry(d);
+  const faces={
+    top:[g.FTL,g.FTR,g.RTR,g.RTL],
+    side:rotated?[g.FTL,g.FBL,g.RBL,g.RTL]:[g.FTR,g.FBR,g.RBR,g.RTR],
+    front:[g.FTL,g.FTR,g.FBR,g.FBL]
+  };
+  const fills={top:"#d8dde2",side:"#c9ced4",front:"#e6e9ec"};
+
+  ["top","side","front"].forEach(key=>{
+    svg.appendChild(svgEl("polygon",{points:poly(faces[key]),fill:fills[key],stroke:"#475569","stroke-width":2,class:`face ${face===key?"selected":""}`,"data-face":key}));
+  });
+
+  drawDimensions(svg,g,d);
+  drawCutPlanes(svg,g,face,layout.slabs,available);
+  drawRuler(svg,g,face,layout,available,marginStart,marginEnd,kerf);
+
+  if(excess>0){
+    const excessColor=layout.slabs.length ? layout.slabs[layout.slabs.length-1].color : "#b91c1c";
+    addText(svg,1030,690,`EXCESSO: +${fmt(excess)} cm`,"excess-label",{"text-anchor":"end",fill:excessColor});
+  }
+
+  svg.querySelectorAll(".face").forEach(f=>f.addEventListener("click",()=>{$("faceSelect").value=f.dataset.face;draw()}));
+
+}
+
+function drawDimensions(svg,g,d){
+  const irregular=$("irregularToggle").checked;
+  addText(svg,(g.FBL.x+g.FBR.x)/2,g.FBL.y+40,`Comp. 1: ${fmt(d.l1)} cm`,"dimension-text",{"text-anchor":"middle"});
+  addText(svg,g.FTL.x-18,(g.FTL.y+g.FBL.y)/2,`Alt. 1: ${fmt(d.h1)} cm`,"dimension-text",{"text-anchor":"middle",transform:`rotate(-90 ${g.FTL.x-18} ${(g.FTL.y+g.FBL.y)/2})`});
+  addText(svg,(g.FTR.x+g.RTR.x)/2,(g.FTR.y+g.RTR.y)/2-12,`Larg. 1: ${fmt(d.w1)} cm`,"dimension-text",{"text-anchor":"middle"});
+
+  if(irregular){
+    addText(svg,(g.RBL.x+g.RBR.x)/2,g.RBL.y-14,`Comp. 2: ${fmt(d.l2)} cm`,"dimension-text",{"text-anchor":"middle"});
+    addText(svg,g.RTR.x+26,(g.RTR.y+g.RBR.y)/2,`Alt. 2: ${fmt(d.h2)} cm`,"dimension-text",{"text-anchor":"middle",transform:`rotate(-90 ${g.RTR.x+26} ${(g.RTR.y+g.RBR.y)/2})`});
+    addText(svg,(g.FBL.x+g.RBL.x)/2,(g.FBL.y+g.RBL.y)/2+20,`Larg. 2: ${fmt(d.w2)} cm`,"dimension-text",{"text-anchor":"middle"});
+  }
+}
+
+function drawCutPlanes(svg,g,face,slabs,available){
+  if(available<=0) return;
+
+  slabs.forEach((s,idx)=>{
+    const t=s.end/available;
+    const dash=t>1?"9 6":"";
+
+    if(face==="front"){
+      // CORRETO: posição ao longo do comprimento da face frontal.
+      // 1) linha vertical atravessa toda a face frontal
+      const frontTop=pLerp(g.FTL,g.FTR,t);
+      const frontBottom=pLerp(g.FBL,g.FBR,t);
+      svg.appendChild(svgEl("line",{
+        x1:frontTop.x,y1:frontTop.y,x2:frontBottom.x,y2:frontBottom.y,
+        stroke:s.color,"stroke-width":3,"stroke-linecap":"round","stroke-dasharray":dash
+      }));
+
+      // 2) continuação do mesmo plano por CIMA do bloco,
+      // da aresta superior frontal à aresta superior traseira.
+      const rearTop=pLerp(g.RTL,g.RTR,t);
+      svg.appendChild(svgEl("line",{
+        x1:frontTop.x,y1:frontTop.y,x2:rearTop.x,y2:rearTop.y,
+        stroke:s.color,"stroke-width":3,"stroke-linecap":"round","stroke-dasharray":dash
+      }));
+
+    }else if(face==="side"){
+      // Posição ao longo da largura: linha na face lateral e continuação no topo.
+      const sideTop=pLerp(g.FTR,g.RTR,t);
+      const sideBottom=pLerp(g.FBR,g.RBR,t);
+      svg.appendChild(svgEl("line",{
+        x1:sideTop.x,y1:sideTop.y,x2:sideBottom.x,y2:sideBottom.y,
+        stroke:s.color,"stroke-width":3,"stroke-linecap":"round","stroke-dasharray":dash
+      }));
+
+      const topLeft=pLerp(g.FTL,g.RTL,t);
+      svg.appendChild(svgEl("line",{
+        x1:topLeft.x,y1:topLeft.y,x2:sideTop.x,y2:sideTop.y,
+        stroke:s.color,"stroke-width":3,"stroke-linecap":"round","stroke-dasharray":dash
+      }));
+
+    }else{
+      // Corte segundo a altura: traço horizontal na frente e correspondente na lateral.
+      const left=pLerp(g.FTL,g.FBL,t);
+      const right=pLerp(g.FTR,g.FBR,t);
+      svg.appendChild(svgEl("line",{
+        x1:left.x,y1:left.y,x2:right.x,y2:right.y,
+        stroke:s.color,"stroke-width":3,"stroke-linecap":"round","stroke-dasharray":dash
+      }));
+      if(!rotated){
+        const rearRight=pLerp(g.RTR,g.RBR,t);
+        svg.appendChild(svgEl("line",{
+          x1:right.x,y1:right.y,x2:rearRight.x,y2:rearRight.y,
+          stroke:s.color,"stroke-width":3,"stroke-linecap":"round","stroke-dasharray":dash
+        }));
+      }
+    }
+
+    // Uma identificação por série, discreta, fora da zona principal do bloco.
+    const prev=slabs[idx-1];
+    if(!prev || prev.seriesIndex!==s.seriesIndex){
+      const labelX=rotated?155:865;
+      const labelY=75+s.seriesIndex*30;
+      svg.appendChild(svgEl("rect",{
+        x:labelX-8,y:labelY-18,width:112,height:23,rx:6,
+        fill:"#fff",stroke:s.color,"stroke-width":2,opacity:.97
+      }));
+      addText(svg,labelX,labelY-2,`${fmt(s.width)} cm`,"cut-label");
+    }
+  });
+}
+
+function drawRuler(svg,g,face,layout,available,marginStart,marginEnd,kerf){
+  if(available<=0) return;
+
+  // Para a face frontal, a régua fica rigorosamente alinhada com a base frontal do bloco.
+  // Nas outras orientações mantém uma régua horizontal de leitura.
+  let x0, x1;
+  if(face==="front"){
+    x0=g.FBL.x;
+    x1=g.FBR.x;
+  }else{
+    x0=170;
+    x1=930;
+  }
+
+  const y=Math.max(g.FBL.y,g.FBR.y)+92;
+  const displayMax=Math.max(available,layout.total,1);
+  const pxPerUnit=(x1-x0)/available;
+
+  // Se houver excesso, prolongamos a régua para além do bloco.
+  const rulerEnd=x0+displayMax*pxPerUnit;
+
+  // Linha-base total
+  svg.appendChild(svgEl("line",{
+    x1:x0,y1:y,x2:rulerEnd,y2:y,stroke:"#64748b","stroke-width":1.4
+  }));
+
+  function segment(start,end,label,color,kind="slab"){
+    if(end<=start) return;
+    const a=x0+start*pxPerUnit;
+    const b=x0+end*pxPerUnit;
+
+    // Linhas de extensão nas extremidades do segmento
+    svg.appendChild(svgEl("line",{x1:a,y1:y-9,x2:a,y2:y+9,stroke:color,"stroke-width":1.6}));
+    svg.appendChild(svgEl("line",{x1:b,y1:y-9,x2:b,y2:y+9,stroke:color,"stroke-width":1.6}));
+
+    // Cota colorida por cima da linha-base
+    const dimY=y-18;
+    svg.appendChild(svgEl("line",{x1:a,y1:dimY,x2:b,y2:dimY,stroke:color,"stroke-width":2}));
+    svg.appendChild(svgEl("line",{x1:a,y1:dimY-4,x2:a,y2:dimY+4,stroke:color,"stroke-width":1.5}));
+    svg.appendChild(svgEl("line",{x1:b,y1:dimY-4,x2:b,y2:dimY+4,stroke:color,"stroke-width":1.5}));
+
+    const widthPx=b-a;
+    const fontSize=widthPx<38?9:11;
+    addText(svg,(a+b)/2,dimY-7,label,"ruler-text",{
+      "text-anchor":"middle",fill:color,"font-size":fontSize
+    });
+  }
+
+  // Margem inicial
+  if(marginStart>0){
+    segment(0,marginStart,`${fmt(marginStart)} cm`,"#475569","margin");
+  }
+
+  // Chapas - cada uma recebe a sua própria cota na cor da série
+  layout.slabs.forEach((s,i)=>{
+    segment(s.start,s.end,`${fmt(s.width)} cm`,s.color,"slab");
+
+    // Disco: representado apenas por pequenas marcas cinzentas,
+    // sem texto para não poluir a leitura.
+    const next=layout.slabs[i+1];
+    if(next && next.start>s.end){
+      const a=x0+s.end*pxPerUnit;
+      const b=x0+next.start*pxPerUnit;
+      svg.appendChild(svgEl("line",{x1:a,y1:y+13,x2:b,y2:y+13,stroke:"#94a3b8","stroke-width":2}));
+    }
+  });
+
+  // Margem final
+  if(marginEnd>0){
+    segment(layout.endBeforeMargin,layout.total,`${fmt(marginEnd)} cm`,"#475569","margin");
+  }
+
+  // Marca do fim físico do bloco
+  const availableX=x0+available*pxPerUnit;
+  svg.appendChild(svgEl("line",{
+    x1:availableX,y1:y-28,x2:availableX,y2:y+20,stroke:"#111827","stroke-width":2
+  }));
+
+  // Sobra depois da margem final.
+  // Positiva quando ainda há bloco disponível; negativa quando há excesso.
+  const sobra=available-layout.total;
+  const totalX=x0+layout.total*pxPerUnit;
+  const sobraColor=sobra<0
+    ? (layout.slabs.length ? layout.slabs[layout.slabs.length-1].color : "#b91c1c")
+    : "#475569";
+  const sobraY=y+48;
+
+  // A cota vai sempre do fim do plano de corte/margem final ao fim físico do bloco.
+  svg.appendChild(svgEl("line",{
+    x1:Math.min(totalX,availableX),y1:sobraY,
+    x2:Math.max(totalX,availableX),y2:sobraY,
+    stroke:sobraColor,"stroke-width":2.5
+  }));
+  svg.appendChild(svgEl("line",{
+    x1:totalX,y1:sobraY-7,x2:totalX,y2:sobraY+7,
+    stroke:sobraColor,"stroke-width":2
+  }));
+  svg.appendChild(svgEl("line",{
+    x1:availableX,y1:sobraY-7,x2:availableX,y2:sobraY+7,
+    stroke:sobraColor,"stroke-width":2
+  }));
+
+  const sobraText=`Sobra: ${sobra<0?"−":""}${fmt(Math.abs(sobra))} cm`;
+  addText(svg,(totalX+availableX)/2,sobraY-8,
+    sobraText,"ruler-text",{
+      "text-anchor":"middle",fill:sobraColor,"font-weight":"900"
+    });
+}
+
+const seriesListEl=$("seriesList");
+seriesListEl.addEventListener("input",e=>{
+  const input=e.target.closest("input[data-index][data-field]");
+  if(!input) return;
+  const i=Number(input.dataset.index);
+  if(!Number.isInteger(i) || !series[i]) return;
+  const field=input.dataset.field;
+  const raw=String(input.value).replace(",", ".");
+  const value=Number(raw);
+  series[i][field]=field==="count" ? Math.max(0,Math.floor(value||0)) : Math.max(0,value||0);
+  draw();
+});
+seriesListEl.addEventListener("click",e=>{
+  const btn=e.target.closest("[data-remove]");
+  if(!btn) return;
+  e.preventDefault();
+  const i=Number(btn.dataset.remove);
+  if(!Number.isInteger(i) || !series[i]) return;
+  if(series.length===1){
+    series[0]={width:0,count:0,color:colors[0]};
+  }else{
+    series.splice(i,1);
+    series.forEach((s,j)=>s.color=colors[j%colors.length]);
+  }
+  renderSeries();
+  draw();
+});
+
+$("irregularToggle").addEventListener("change",e=>{setIrregular(e.target.checked);draw()});
+["length1","length2","width1","width2","height1","height2","kerf","marginStart","marginEnd"].forEach(id=>$(id).addEventListener("input",draw));
+$("faceSelect").addEventListener("change",draw);
+$("addSeries").addEventListener("click",e=>{e.preventDefault();const i=series.length;series.push({width:0,count:0,color:colors[i%colors.length]});renderSeries();draw()});
+$("rotateButton").addEventListener("click",()=>{rotated=!rotated;draw()});
+$("resetButton").addEventListener("click",()=>{
+  $("irregularToggle").checked=false;setIrregular(false);
+  ["length1","length2","width1","width2","height1","height2"].forEach(id=>$(id).value=0);
+  $("kerf").value=1;
+  $("marginStart").value=5;
+  $("marginEnd").value=5;
+  $("faceSelect").value="front";rotated=false;series=[{width:0,count:0,color:colors[0]}];
+  renderSeries();draw();
+});
+
+setIrregular(false);renderSeries();draw();
+
+if("serviceWorker" in navigator && location.protocol.startsWith("http")){
+  window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}));
+}
+</script>
+</body>
+</html>
