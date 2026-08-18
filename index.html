@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Corte Primário">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-192.png">
-<title>Corte Primário de Granito 3D — PWA v8</title>
+<title>Corte Primário de Granito 3D — PWA v9</title>
 <style>
 *{box-sizing:border-box}
 :root{font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#eef1f4;color:#111827}
@@ -113,22 +113,22 @@ input:disabled{opacity:.35;cursor:not-allowed}
         <label class="switch-line"><input id="irregularToggle" type="checkbox"><span>Bloco irregular</span></label>
       </div>
       <div class="measure-grid">
-        <label>Comp. 1<div class="unit"><input id="length1" type="number" min="0" step="0.1" value="0"><span>cm</span></div></label>
-        <label class="measure2-field hidden-measure2">Comp. 2<div class="unit"><input id="length2" type="number" min="0" step="0.1" value="0" disabled><span>cm</span></div></label>
-        <label>Larg. 1<div class="unit"><input id="width1" type="number" min="0" step="0.1" value="0"><span>cm</span></div></label>
-        <label class="measure2-field hidden-measure2">Larg. 2<div class="unit"><input id="width2" type="number" min="0" step="0.1" value="0" disabled><span>cm</span></div></label>
-        <label>Alt. 1<div class="unit"><input id="height1" type="number" min="0" step="0.1" value="0"><span>cm</span></div></label>
-        <label class="measure2-field hidden-measure2">Alt. 2<div class="unit"><input id="height2" type="number" min="0" step="0.1" value="0" disabled><span>cm</span></div></label>
+        <label>Comp. 1<div class="unit"><input inputmode="decimal" enterkeyhint="next" id="length1" type="number" min="0" step="0.1" value="0"><span>cm</span></div></label>
+        <label class="measure2-field hidden-measure2">Comp. 2<div class="unit"><input inputmode="decimal" enterkeyhint="next" id="length2" type="number" min="0" step="0.1" value="0" disabled><span>cm</span></div></label>
+        <label>Larg. 1<div class="unit"><input inputmode="decimal" enterkeyhint="next" id="width1" type="number" min="0" step="0.1" value="0"><span>cm</span></div></label>
+        <label class="measure2-field hidden-measure2">Larg. 2<div class="unit"><input inputmode="decimal" enterkeyhint="next" id="width2" type="number" min="0" step="0.1" value="0" disabled><span>cm</span></div></label>
+        <label>Alt. 1<div class="unit"><input inputmode="decimal" enterkeyhint="next" id="height1" type="number" min="0" step="0.1" value="0"><span>cm</span></div></label>
+        <label class="measure2-field hidden-measure2">Alt. 2<div class="unit"><input inputmode="decimal" enterkeyhint="next" id="height2" type="number" min="0" step="0.1" value="0" disabled><span>cm</span></div></label>
       </div>
     </section>
 
     <section class="box">
       <h2>Corte</h2>
       <div class="measure-grid">
-        <label>Margem inicial<div class="unit"><input id="marginStart" type="number" min="0" step="0.1" value="5"><span>cm</span></div></label>
-        <label>Margem final<div class="unit"><input id="marginEnd" type="number" min="0" step="0.1" value="5"><span>cm</span></div></label>
+        <label>Margem inicial<div class="unit"><input inputmode="decimal" enterkeyhint="next" id="marginStart" type="number" min="0" step="0.1" value="5"><span>cm</span></div></label>
+        <label>Margem final<div class="unit"><input inputmode="decimal" enterkeyhint="next" id="marginEnd" type="number" min="0" step="0.1" value="5"><span>cm</span></div></label>
       </div>
-      <label class="mt">Espessura do disco<div class="unit"><input id="kerf" type="number" min="0" step="0.1" value="1"><span>cm</span></div></label>
+      <label class="mt">Espessura do disco<div class="unit"><input inputmode="decimal" enterkeyhint="next" id="kerf" type="number" min="0" step="0.1" value="1"><span>cm</span></div></label>
       <label class="mt">Face / orientação
         <select id="faceSelect">
           <option value="front">Frontal — Comp. × Alt.</option>
@@ -144,8 +144,8 @@ input:disabled{opacity:.35;cursor:not-allowed}
       <div id="seriesList" class="series-list">
         <div class="series-row" data-series-row="0">
           <div class="series-swatch" style="background:#2563eb"></div>
-          <label>Espessura<div class="unit"><input inputmode="decimal" type="number" min="0" step="0.1" data-index="0" data-field="width" value="0"><span>cm</span></div></label>
-          <label>Qtd.<input inputmode="numeric" type="number" min="0" step="1" data-index="0" data-field="count" value="0"></label>
+          <label>Espessura<div class="unit"><input inputmode="decimal" enterkeyhint="next" type="number" min="0" step="0.1" data-index="0" data-field="width" value="0"><span>cm</span></div></label>
+          <label>Qtd.<input inputmode="numeric" enterkeyhint="next" type="number" min="0" step="1" data-index="0" data-field="count" value="0"></label>
           <button type="button" class="series-remove" data-remove="0">×</button>
         </div>
       </div>
@@ -215,8 +215,8 @@ function renderSeries(){
     const row=document.createElement("div"); row.className="series-row";
     row.innerHTML=`
       <div class="series-swatch" style="background:${s.color}"></div>
-      <label>Espessura<div class="unit"><input inputmode="decimal" type="number" min="0" step="0.1" data-index="${i}" data-field="width" value="${s.width}"><span>cm</span></div></label>
-      <label>Qtd.<input inputmode="numeric" type="number" min="0" step="1" data-index="${i}" data-field="count" value="${s.count}"></label>
+      <label>Espessura<div class="unit"><input inputmode="decimal" enterkeyhint="next" type="number" min="0" step="0.1" data-index="${i}" data-field="width" value="${s.width}"><span>cm</span></div></label>
+      <label>Qtd.<input inputmode="numeric" enterkeyhint="next" type="number" min="0" step="1" data-index="${i}" data-field="count" value="${s.count}"></label>
       <button type="button" class="series-remove" data-remove="${i}">×</button>`;
     list.appendChild(row);
   });
@@ -316,14 +316,48 @@ function draw(){
 
 function drawDimensions(svg,g,d){
   const irregular=$("irregularToggle").checked;
-  addText(svg,(g.FBL.x+g.FBR.x)/2,g.FBL.y+40,`Comp. 1: ${fmt(d.l1)} cm`,"dimension-text",{"text-anchor":"middle"});
-  addText(svg,g.FTL.x-18,(g.FTL.y+g.FBL.y)/2,`Alt. 1: ${fmt(d.h1)} cm`,"dimension-text",{"text-anchor":"middle",transform:`rotate(-90 ${g.FTL.x-18} ${(g.FTL.y+g.FBL.y)/2})`});
-  addText(svg,(g.FTR.x+g.RTR.x)/2,(g.FTR.y+g.RTR.y)/2-12,`Larg. 1: ${fmt(d.w1)} cm`,"dimension-text",{"text-anchor":"middle"});
+
+  // As cotas acompanham SEMPRE as arestas que estão visíveis.
+  // Rodar a vista apenas muda o lado de onde observamos o bloco;
+  // nunca troca Comprimento/Largura/Altura nem deixa textos presos ao lado oculto.
+  const frontSideX = rotated ? g.FTR.x + 22 : g.FTL.x - 22;
+  const frontSideY = (g.FTL.y + g.FBL.y) / 2;
+  const visFrontTop = rotated ? g.FTL : g.FTR;
+  const visRearTop  = rotated ? g.RTL : g.RTR;
+  const visRearTopOuterX = rotated ? g.RTL.x - 28 : g.RTR.x + 28;
+  const visRearMidY = rotated ? (g.RTL.y + g.RBL.y)/2 : (g.RTR.y + g.RBR.y)/2;
+  const visRearBottom = rotated ? g.RBL : g.RBR;
+  const visFrontBottom = rotated ? g.FBL : g.FBR;
+
+  // Comprimento frontal: sempre por baixo da face frontal.
+  addText(svg,(g.FBL.x+g.FBR.x)/2,g.FBL.y+40,
+    `Comp. 1: ${fmt(d.l1)} cm`,"dimension-text",{"text-anchor":"middle"});
+
+  // Altura frontal: coloca-se no lado oposto à profundidade visível,
+  // ficando sempre fora do bloco.
+  addText(svg,frontSideX,frontSideY,`Alt. 1: ${fmt(d.h1)} cm`,"dimension-text",{
+    "text-anchor":"middle",transform:`rotate(-90 ${frontSideX} ${frontSideY})`
+  });
+
+  // Largura: usa a aresta superior de profundidade que está efetivamente visível.
+  const widthMidX=(visFrontTop.x+visRearTop.x)/2;
+  const widthMidY=(visFrontTop.y+visRearTop.y)/2-14;
+  addText(svg,widthMidX,widthMidY,`Larg. 1: ${fmt(d.w1)} cm`,"dimension-text",{"text-anchor":"middle"});
 
   if(irregular){
-    addText(svg,(g.RBL.x+g.RBR.x)/2,g.RBL.y-14,`Comp. 2: ${fmt(d.l2)} cm`,"dimension-text",{"text-anchor":"middle"});
-    addText(svg,g.RTR.x+26,(g.RTR.y+g.RBR.y)/2,`Alt. 2: ${fmt(d.h2)} cm`,"dimension-text",{"text-anchor":"middle",transform:`rotate(-90 ${g.RTR.x+26} ${(g.RTR.y+g.RBR.y)/2})`});
-    addText(svg,(g.FBL.x+g.RBL.x)/2,(g.FBL.y+g.RBL.y)/2+20,`Larg. 2: ${fmt(d.w2)} cm`,"dimension-text",{"text-anchor":"middle"});
+    // Comprimento traseiro.
+    addText(svg,(g.RBL.x+g.RBR.x)/2,Math.min(g.RBL.y,g.RBR.y)-14,
+      `Comp. 2: ${fmt(d.l2)} cm`,"dimension-text",{"text-anchor":"middle"});
+
+    // Altura traseira: sempre para fora da silhueta.
+    addText(svg,visRearTopOuterX,visRearMidY,`Alt. 2: ${fmt(d.h2)} cm`,"dimension-text",{
+      "text-anchor":"middle",transform:`rotate(-90 ${visRearTopOuterX} ${visRearMidY})`
+    });
+
+    // Segunda largura na aresta inferior visível de profundidade.
+    addText(svg,(visFrontBottom.x+visRearBottom.x)/2,
+      (visFrontBottom.y+visRearBottom.y)/2+22,
+      `Larg. 2: ${fmt(d.w2)} cm`,"dimension-text",{"text-anchor":"middle"});
   }
 }
 
@@ -353,35 +387,45 @@ function drawCutPlanes(svg,g,face,slabs,available){
       }));
 
     }else if(face==="side"){
-      // Posição ao longo da largura: linha na face lateral e continuação no topo.
-      const sideTop=pLerp(g.FTR,g.RTR,t);
-      const sideBottom=pLerp(g.FBR,g.RBR,t);
+      // Posição ao longo da largura. A linha deve ficar NA FACE LATERAL VISÍVEL.
+      // Vista normal = lateral direita; vista rodada = lateral esquerda.
+      const frontTopEdge = rotated ? g.FTL : g.FTR;
+      const rearTopEdge  = rotated ? g.RTL : g.RTR;
+      const frontBottomEdge = rotated ? g.FBL : g.FBR;
+      const rearBottomEdge  = rotated ? g.RBL : g.RBR;
+
+      const sideTop=pLerp(frontTopEdge,rearTopEdge,t);
+      const sideBottom=pLerp(frontBottomEdge,rearBottomEdge,t);
       svg.appendChild(svgEl("line",{
         x1:sideTop.x,y1:sideTop.y,x2:sideBottom.x,y2:sideBottom.y,
         stroke:s.color,"stroke-width":3,"stroke-linecap":"round","stroke-dasharray":dash
       }));
 
-      const topLeft=pLerp(g.FTL,g.RTL,t);
+      // Continuação do plano pela face superior, até à aresta oposta.
+      const otherFrontTop = rotated ? g.FTR : g.FTL;
+      const otherRearTop  = rotated ? g.RTR : g.RTL;
+      const topOther=pLerp(otherFrontTop,otherRearTop,t);
       svg.appendChild(svgEl("line",{
-        x1:topLeft.x,y1:topLeft.y,x2:sideTop.x,y2:sideTop.y,
+        x1:topOther.x,y1:topOther.y,x2:sideTop.x,y2:sideTop.y,
         stroke:s.color,"stroke-width":3,"stroke-linecap":"round","stroke-dasharray":dash
       }));
 
     }else{
-      // Corte segundo a altura: traço horizontal na frente e correspondente na lateral.
+      // Corte segundo a altura: traço horizontal na frente e continuação
+      // pela lateral que está visível, independentemente da rotação.
       const left=pLerp(g.FTL,g.FBL,t);
       const right=pLerp(g.FTR,g.FBR,t);
       svg.appendChild(svgEl("line",{
         x1:left.x,y1:left.y,x2:right.x,y2:right.y,
         stroke:s.color,"stroke-width":3,"stroke-linecap":"round","stroke-dasharray":dash
       }));
-      if(!rotated){
-        const rearRight=pLerp(g.RTR,g.RBR,t);
-        svg.appendChild(svgEl("line",{
-          x1:right.x,y1:right.y,x2:rearRight.x,y2:rearRight.y,
-          stroke:s.color,"stroke-width":3,"stroke-linecap":"round","stroke-dasharray":dash
-        }));
-      }
+
+      const frontVisible = rotated ? left : right;
+      const rearVisible = rotated ? pLerp(g.RTL,g.RBL,t) : pLerp(g.RTR,g.RBR,t);
+      svg.appendChild(svgEl("line",{
+        x1:frontVisible.x,y1:frontVisible.y,x2:rearVisible.x,y2:rearVisible.y,
+        stroke:s.color,"stroke-width":3,"stroke-linecap":"round","stroke-dasharray":dash
+      }));
     }
 
     // Uma identificação por série, discreta, fora da zona principal do bloco.
@@ -506,6 +550,25 @@ function drawRuler(svg,g,face,layout,available,marginStart,marginEnd,kerf){
       "text-anchor":"middle",fill:sobraColor,"font-weight":"900"
     });
 }
+
+// Mobile: ao entrar num campo numérico com valor 0, limpa-o para escrita imediata.
+// Se o utilizador sair sem escrever nada, o campo volta automaticamente a 0.
+document.addEventListener("focusin",e=>{
+  const input=e.target.closest('input[type="number"]');
+  if(!input || input.disabled) return;
+  if(String(input.value).trim()!=="" && Number(String(input.value).replace(",","."))===0){
+    input.value="";
+  }
+});
+
+document.addEventListener("focusout",e=>{
+  const input=e.target.closest('input[type="number"]');
+  if(!input || input.disabled) return;
+  if(String(input.value).trim()===""){
+    input.value="0";
+    input.dispatchEvent(new Event("input",{bubbles:true}));
+  }
+});
 
 const seriesListEl=$("seriesList");
 seriesListEl.addEventListener("input",e=>{

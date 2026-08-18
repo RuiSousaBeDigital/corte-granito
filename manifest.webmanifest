@@ -2,7 +2,7 @@
   "name": "Corte Primário de Granito",
   "short_name": "Corte Granito",
   "description": "Planeamento mobile do corte primário de blocos de granito.",
-  "start_url": "./CorteGranito_PWA_v7.html",
+  "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait-primary",
